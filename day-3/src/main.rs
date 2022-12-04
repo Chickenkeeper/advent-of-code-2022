@@ -55,12 +55,12 @@ fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
                     if item_1 == item_2 && item_1 == item_3 {
                         priority_sum += get_item_priority(item_1)
                             .map_err(|e| format!("Error parsing group {group_counter}: {e}"))?;
+                        group_counter += 1;
                         continue 'outer;
                     }
                 }
             }
         }
-        group_counter += 1;
         return Err(format!("No common item found in group {group_counter}"))?;
     }
     return Ok(priority_sum);

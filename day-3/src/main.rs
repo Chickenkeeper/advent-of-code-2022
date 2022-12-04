@@ -36,24 +36,32 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
 
 fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let lines = BufReader::new(file)
-        .lines()
-        .collect::<Result<Vec<String>, std::io::Error>>()?;
+    let mut lines = BufReader::new(file).lines().peekable();
     let mut priority_sum = 0;
+    let mut group_counter = 0;
 
-    'outer: for (i, rucksacks) in lines.chunks_exact(3).enumerate() {
+    'outer: while lines.peek().is_some() {
+        let mut rucksacks: [String; 3] = Default::default();
+
+        for (i, rucksack) in rucksacks.iter_mut().enumerate() {
+            *rucksack = lines
+                .next()
+                .ok_or_else(|| format!("Error reading line {i} in group {group_counter}"))??;
+        }
+
         for item_1 in rucksacks[0].chars() {
             for item_2 in rucksacks[1].chars() {
                 for item_3 in rucksacks[2].chars() {
                     if item_1 == item_2 && item_1 == item_3 {
                         priority_sum += get_item_priority(item_1)
-                            .map_err(|e| format!("Error parsing group {i}: {e}"))?;
+                            .map_err(|e| format!("Error parsing group {group_counter}: {e}"))?;
                         continue 'outer;
                     }
                 }
             }
         }
-        return Err(format!("No common item found in group {i}"))?;
+        group_counter += 1;
+        return Err(format!("No common item found in group {group_counter}"))?;
     }
     return Ok(priority_sum);
 }
@@ -62,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let part_1 = solution_part_1()?;
     let part_2 = solution_part_2()?;
 
-    println!("Part 1 - Rucksack priority sum: {part_1}");
+    println!("Part 1 - Duplicate item priority sum: {part_1}");
     println!("Part 2 - Badge priority sum: {part_2}");
     return Ok(());
 }

@@ -28,7 +28,7 @@ impl Shape {
             'A' | 'X' => Ok(Shape::Rock),
             'B' | 'Y' => Ok(Shape::Paper),
             'C' | 'Z' => Ok(Shape::Scissors),
-            _ => Err("Invalid char"),
+            _ => Err("Character must only be A, B, C, X, Y, or Z"),
         }
     }
 
@@ -68,7 +68,7 @@ impl Outcome {
             'X' => Ok(Outcome::Lose),
             'Y' => Ok(Outcome::Draw),
             'Z' => Ok(Outcome::Win),
-            _ => Err("Invalid char"),
+            _ => Err("Character must only by X, Y, or Z"),
         }
     }
 
@@ -90,9 +90,9 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
         let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
         let l_bytes = l.as_bytes();
         let opponent_shape = Shape::from_char(l_bytes[0] as char)
-            .map_err(|_| format!("Invalid opponent shape on line {i}"))?;
+            .map_err(|e| format!("Invalid opponent shape on line {i}; {e}"))?;
         let player_shape = Shape::from_char(l_bytes[2] as char)
-            .map_err(|_| format!("Invalid player shape on line {i}"))?;
+            .map_err(|e| format!("Invalid player shape on line {i}; {e}"))?;
         let round_outcome = Outcome::from_shapes(player_shape, opponent_shape);
 
         score += player_shape.to_score();
@@ -111,9 +111,9 @@ fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
         let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
         let l_bytes = l.as_bytes();
         let opponent_shape = Shape::from_char(l_bytes[0] as char)
-            .map_err(|_| format!("Invalid opponent shape on line {i}"))?;
+            .map_err(|e| format!("Invalid opponent shape on line {i}; {e}"))?;
         let target_outcome = Outcome::from_char(l_bytes[2] as char)
-            .map_err(|_| format!("Invalid round outcome on line {i}"))?;
+            .map_err(|e| format!("Invalid round outcome on line {i}; {e}"))?;
         let target_player_shape = Shape::from_shape_and_outcome(opponent_shape, target_outcome);
 
         score += target_outcome.to_score();

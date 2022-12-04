@@ -1,34 +1,66 @@
 use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
 
-fn main() -> std::io::Result<()> {
-    let file = File::open("input.txt")?;
+fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
+    let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e}"))?;
     let lines = BufReader::new(file).lines();
-    let mut calories = Vec::new();
+    let mut max_calories = 0;
     let mut current_calories = 0;
 
     for (i, line) in lines.enumerate() {
-        let l = line?;
+        let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
 
-        if l.len() > 0 {
-            current_calories += match l.parse::<usize>() {
-                Ok(n) => std::io::Result::Ok(n),
-                Err(e) => std::io::Result::Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Couldn't parse line {i}: {e:?}"),
-                )),
-            }?;
+        if !l.is_empty() {
+            current_calories += l
+                .parse::<usize>()
+                .map_err(|e| format!("Error parsing line {i}: {e:?}"))?;
         } else {
-            calories.push(current_calories);
+            if current_calories > max_calories {
+                max_calories = current_calories;
+            }
             current_calories = 0;
         }
     }
+    return Ok(max_calories);
+}
 
-    calories.sort();
-    let max_calories = calories.last().unwrap();
-    let top_3_calories: usize = calories.iter().rev().take(3).sum();
-    println!("a) Maximum Calories: {max_calories}");
-    println!("b) Top 3 Calories: {top_3_calories}");
+fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
+    let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e}"))?;
+    let lines = BufReader::new(file).lines();
+    let mut max_calories = 0;
+    let mut second_most_calories = 0;
+    let mut third_most_calories = 0;
+    let mut current_calories = 0;
+
+    for (i, line) in lines.enumerate() {
+        let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
+
+        if !l.is_empty() {
+            current_calories += l
+                .parse::<usize>()
+                .map_err(|e| format!("Error parsing line {i}: {e:?}"))?;
+        } else {
+            if current_calories > max_calories {
+                third_most_calories = second_most_calories;
+                second_most_calories = max_calories;
+                max_calories = current_calories;
+            } else if current_calories > second_most_calories {
+                third_most_calories = second_most_calories;
+                second_most_calories = current_calories;
+            } else if current_calories > third_most_calories {
+                third_most_calories = current_calories;
+            }
+            current_calories = 0;
+        }
+    }
+    return Ok(max_calories + second_most_calories + third_most_calories);
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let part_1 = solution_part_1()?;
+    let part_2 = solution_part_2()?;
+
+    println!("Part 1 - Maximum Calories: {part_1}");
+    println!("Part 2 - Top 3 Calories: {part_2}");
     return Ok(());
 }

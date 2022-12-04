@@ -26,7 +26,9 @@ fn main() -> std::io::Result<()> {
     }
 
     calories.sort();
-    let total_calories: usize = calories.iter().rev().take(3).sum();
-    println!("Total Calories: {total_calories}");
+    let max_calories = calories.last().unwrap();
+    let top_3_calories: usize = calories.iter().rev().take(3).sum();
+    println!("a) Maximum Calories: {max_calories}");
+    println!("b) Top 3 Calories: {top_3_calories}");
     return Ok(());
 }

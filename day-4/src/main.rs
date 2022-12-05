@@ -28,8 +28,8 @@ impl Assignment {
         return Ok((elf_1_sections, elf_2_sections));
     }
 
-    fn contains_section(&self, n: usize) -> bool {
-        return n >= self.section_start && n <= self.section_end;
+    fn contains_section(&self, section: usize) -> bool {
+        return section >= self.section_start && section <= self.section_end;
     }
 
     fn contains_assignment(&self, assignment: Assignment) -> bool {

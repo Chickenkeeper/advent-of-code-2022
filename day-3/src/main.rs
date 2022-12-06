@@ -16,15 +16,14 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let lines = BufReader::new(file).lines();
     let mut priority_sum = 0;
 
-    'outer: for (i, line) in lines.enumerate() {
-        let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
+    'outer: for line in lines {
+        let l = line?;
         let compartments = l.split_at(l.len() / 2);
 
         for c0 in compartments.0.chars() {
             for c1 in compartments.1.chars() {
                 if c0 == c1 {
-                    priority_sum += get_item_priority(c1)
-                        .map_err(|e| format!("Error parsing line {i}: {e}"))?;
+                    priority_sum += get_item_priority(c1)?;
                     continue 'outer;
                 }
             }
@@ -38,30 +37,32 @@ fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
     let mut lines = BufReader::new(file).lines().peekable();
     let mut priority_sum = 0;
-    let mut group_counter = 0;
 
     'outer: while lines.peek().is_some() {
         let mut rucksacks: [String; 3] = Default::default();
 
-        for (i, rucksack) in rucksacks.iter_mut().enumerate() {
-            *rucksack = lines
-                .next()
-                .ok_or_else(|| format!("Error reading line {i} in group {group_counter}"))??;
+        for rucksack in rucksacks.iter_mut() {
+            if let Some(line) = lines.next() {
+                *rucksack = line?;
+            } else {
+                return Result::Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Not enough items in rucksack",
+                ))?;
+            }
         }
 
         for item_1 in rucksacks[0].chars() {
             for item_2 in rucksacks[1].chars() {
                 for item_3 in rucksacks[2].chars() {
                     if item_1 == item_2 && item_1 == item_3 {
-                        priority_sum += get_item_priority(item_1)
-                            .map_err(|e| format!("Error parsing group {group_counter}: {e}"))?;
-                        group_counter += 1;
+                        priority_sum += get_item_priority(item_1)?;
                         continue 'outer;
                     }
                 }
             }
         }
-        return Err(format!("No common item found in group {group_counter}"))?;
+        return Err("No common item found")?;
     }
     return Ok(priority_sum);
 }

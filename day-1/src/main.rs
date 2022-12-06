@@ -7,13 +7,11 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let mut max_calories = 0;
     let mut current_calories = 0;
 
-    for (i, line) in lines.enumerate() {
-        let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
+    for line in lines {
+        let l = line?;
 
         if !l.is_empty() {
-            current_calories += l
-                .parse::<usize>()
-                .map_err(|e| format!("Error parsing line {i}: {e:?}"))?;
+            current_calories += l.parse::<usize>()?;
         } else {
             if current_calories > max_calories {
                 max_calories = current_calories;
@@ -32,13 +30,11 @@ fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let mut third_most_calories = 0;
     let mut current_calories = 0;
 
-    for (i, line) in lines.enumerate() {
-        let l = line.map_err(|e| format!("Error reading line {i}: {e:?}"))?;
+    for line in lines {
+        let l = line?;
 
         if !l.is_empty() {
-            current_calories += l
-                .parse::<usize>()
-                .map_err(|e| format!("Error parsing line {i}: {e:?}"))?;
+            current_calories += l.parse::<usize>()?;
         } else {
             if current_calories > max_calories {
                 third_most_calories = second_most_calories;

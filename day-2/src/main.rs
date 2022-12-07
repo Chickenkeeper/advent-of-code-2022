@@ -83,18 +83,19 @@ impl Outcome {
 
 fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(3);
     let mut score = 0;
 
-    for line in lines {
-        let l = line?;
-        let l_bytes = l.as_bytes();
-        let opponent_shape = Shape::from_char(l_bytes[0] as char)?;
-        let player_shape = Shape::from_char(l_bytes[2] as char)?;
+    while reader.read_line(&mut line)? != 0 {
+        let line_bytes = line.trim().as_bytes();
+        let opponent_shape = Shape::from_char(line_bytes[0] as char)?;
+        let player_shape = Shape::from_char(line_bytes[2] as char)?;
         let round_outcome = Outcome::from_shapes(player_shape, opponent_shape);
 
         score += player_shape.to_score();
         score += round_outcome.to_score();
+        line.clear();
     }
 
     return Ok(score);
@@ -102,18 +103,19 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
 
 fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(3);
     let mut score = 0;
 
-    for line in lines {
-        let l = line?;
-        let l_bytes = l.as_bytes();
-        let opponent_shape = Shape::from_char(l_bytes[0] as char)?;
-        let target_outcome = Outcome::from_char(l_bytes[2] as char)?;
+    while reader.read_line(&mut line)? != 0 {
+        let line_bytes = line.trim().as_bytes();
+        let opponent_shape = Shape::from_char(line_bytes[0] as char)?;
+        let target_outcome = Outcome::from_char(line_bytes[2] as char)?;
         let target_player_shape = Shape::from_shape_and_outcome(opponent_shape, target_outcome);
 
         score += target_outcome.to_score();
         score += target_player_shape.to_score();
+        line.clear();
     }
 
     return Ok(score);

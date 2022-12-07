@@ -16,7 +16,7 @@ impl Assignment {
         };
     }
 
-    fn from_line(line: String) -> Result<(Assignment, Assignment), ParseIntError> {
+    fn from_line(line: &str) -> Result<(Assignment, Assignment), ParseIntError> {
         let mut sections = [0; 4];
 
         for (i, section) in line.split(&[',', '-']).enumerate() {
@@ -46,32 +46,36 @@ impl Assignment {
 
 fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(8);
     let mut total_containments = 0;
 
-    for line in lines {
-        let (assignment_1, assignment_2) = Assignment::from_line(line?)?;
+    while reader.read_line(&mut line)? != 0 {
+        let (assignment_1, assignment_2) = Assignment::from_line(line.trim())?;
 
         if assignment_1.contains_assignment(assignment_2)
             || assignment_2.contains_assignment(assignment_1)
         {
             total_containments += 1;
         }
+        line.clear();
     }
     return Ok(total_containments);
 }
 
 fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(8);
     let mut total_overlaps = 0;
 
-    for line in lines {
-        let (assignment_1, assignment_2) = Assignment::from_line(line?)?;
+    while reader.read_line(&mut line)? != 0 {
+        let (assignment_1, assignment_2) = Assignment::from_line(line.trim())?;
 
         if assignment_1.overlaps_assignment(assignment_2) {
             total_overlaps += 1;
         }
+        line.clear();
     }
     return Ok(total_overlaps);
 }

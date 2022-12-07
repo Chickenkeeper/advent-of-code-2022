@@ -3,15 +3,17 @@ use std::io::{BufRead, BufReader};
 
 fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(4);
     let mut max_calories = 0;
     let mut current_calories = 0;
 
-    for line in lines {
-        let l = line?;
+    while reader.read_line(&mut line)? != 0 {
+        let num_str = line.trim();
 
-        if !l.is_empty() {
-            current_calories += l.parse::<usize>()?;
+        if !num_str.is_empty() {
+            current_calories += num_str.parse::<usize>()?;
+            line.clear();
         } else {
             if current_calories > max_calories {
                 max_calories = current_calories;
@@ -24,17 +26,19 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
 
 fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(4);
     let mut max_calories = 0;
     let mut second_most_calories = 0;
     let mut third_most_calories = 0;
     let mut current_calories = 0;
 
-    for line in lines {
-        let l = line?;
+    while reader.read_line(&mut line)? != 0 {
+        let num_str = line.trim();
 
-        if !l.is_empty() {
-            current_calories += l.parse::<usize>()?;
+        if !num_str.is_empty() {
+            current_calories += num_str.parse::<usize>()?;
+            line.clear();
         } else {
             if current_calories > max_calories {
                 third_most_calories = second_most_calories;

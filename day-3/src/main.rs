@@ -13,17 +13,19 @@ fn get_item_priority(item: char) -> Result<usize, &'static str> {
 
 fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let lines = BufReader::new(file).lines();
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(8);
     let mut priority_sum = 0;
 
-    'outer: for line in lines {
-        let l = line?;
+    'outer: while reader.read_line(&mut line)? != 0 {
+        let l = line.trim();
         let compartments = l.split_at(l.len() / 2);
 
         for c0 in compartments.0.chars() {
             for c1 in compartments.1.chars() {
                 if c0 == c1 {
                     priority_sum += get_item_priority(c1)?;
+                    line.clear();
                     continue 'outer;
                 }
             }

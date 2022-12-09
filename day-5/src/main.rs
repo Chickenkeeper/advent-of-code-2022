@@ -1,6 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Lines};
-use std::num::ParseIntError;
+use std::io::{BufRead, BufReader};
 
 #[derive(Clone, Copy)]
 struct CrateMovement {
@@ -10,17 +9,24 @@ struct CrateMovement {
 }
 
 impl CrateMovement {
-    // TODO: remove vec and add errors for missing values
-    fn from_string(movement: String) -> Result<CrateMovement, ParseIntError> {
-        let movement: Vec<_> = movement.split_whitespace().collect();
-        let num_crates = movement[1].parse::<usize>()?;
-        let from_stack = movement[3].parse::<usize>()?.saturating_sub(1);
-        let to_stack = movement[5].parse::<usize>()?.saturating_sub(1);
+    fn from_string(movement: &str) -> Result<CrateMovement, Box<dyn std::error::Error>> {
+        let par_err = "Invalid Movement Parameter";
+        let mut tokens = movement.split_whitespace().skip(1).step_by(2);
+        let num_crates = tokens.next().ok_or_else(|| par_err)?.parse::<usize>()?;
+        let from_stack = tokens.next().ok_or_else(|| par_err)?.parse::<usize>()?;
+        let to_stack = tokens.next().ok_or_else(|| par_err)?.parse::<usize>()?;
+
+        if from_stack == 0 || to_stack == 0 {
+            return Result::Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Stack numbers must start from 1",
+            ))?;
+        }
 
         return Ok(CrateMovement {
             num_crates,
-            from_stack,
-            to_stack,
+            from_stack: from_stack - 1,
+            to_stack: to_stack - 1,
         });
     }
 }
@@ -30,16 +36,13 @@ struct CrateStacks {
 }
 
 impl CrateStacks {
-    // TODO: this needs cleaning up
-    fn from_file(lines: &mut Lines<BufReader<File>>) -> Result<CrateStacks, std::io::Error> {
+    fn from_file(reader: &mut BufReader<File>) -> Result<CrateStacks, std::io::Error> {
         let mut stacks: Vec<Vec<char>> = Vec::new();
+        let mut line = String::with_capacity(32);
 
-        loop {
-            let line = lines.next().unwrap();
-            let l = line?;
-            let bytes = l.as_bytes();
+        while reader.read_line(&mut line)? != 0 {
+            let bytes = line.as_bytes();
 
-            // TODO: add protection against reaching the end of the file before reaching the stack numbers
             if (bytes[1] as char).is_ascii_digit() {
                 break;
             }
@@ -53,6 +56,7 @@ impl CrateStacks {
                     stacks[i].push(*b as char);
                 }
             }
+            line.clear();
         }
 
         for stack in stacks.iter_mut() {
@@ -62,28 +66,35 @@ impl CrateStacks {
         return Ok(CrateStacks { stacks });
     }
 
-    // TODO: these need refactoring too
-    fn move_crates_sequential(&mut self, movement: CrateMovement) -> Result<(), ParseIntError> {
-        let start = self.stacks[movement.from_stack].len().saturating_sub(1);
+    fn move_crates_sequential(&mut self, movement: CrateMovement) -> Result<(), &'static str> {
+        let from_stack_len = self.stacks[movement.from_stack].len();
+        if from_stack_len < movement.num_crates {
+            return Err("Stack does not contain enough crates");
+        }
 
+        let start_index = from_stack_len - 1;
         for i in 0..movement.num_crates {
-            let c = self.stacks[movement.from_stack][start - i];
+            let c = self.stacks[movement.from_stack][start_index - i];
             self.stacks[movement.to_stack].push(c);
         }
 
-        self.stacks[movement.from_stack].truncate(start.saturating_sub(movement.num_crates) + 1);
+        self.stacks[movement.from_stack].truncate(start_index + 1 - movement.num_crates);
         return Ok(());
     }
 
-    fn move_crates_grouped(&mut self, movement: CrateMovement) -> Result<(), ParseIntError> {
-        let start = self.stacks[movement.from_stack].len() - movement.num_crates;
+    fn move_crates_grouped(&mut self, movement: CrateMovement) -> Result<(), &'static str> {
+        let from_stack_len = self.stacks[movement.from_stack].len();
+        if from_stack_len < movement.num_crates {
+            return Err("Stack does not contain enough crates");
+        }
 
+        let start_index = from_stack_len - movement.num_crates;
         for i in 0..movement.num_crates {
-            let c = self.stacks[movement.from_stack][start + i];
+            let c = self.stacks[movement.from_stack][start_index + i];
             self.stacks[movement.to_stack].push(c);
         }
 
-        self.stacks[movement.from_stack].truncate(start);
+        self.stacks[movement.from_stack].truncate(start_index);
         return Ok(());
     }
 
@@ -100,12 +111,18 @@ impl CrateStacks {
 
 fn solution_part_1() -> Result<String, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let mut lines = BufReader::new(file).lines();
-    let mut crate_stacks = CrateStacks::from_file(&mut lines)?;
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(16);
+    let mut crate_stacks = CrateStacks::from_file(&mut reader)?;
 
-    for line in lines.skip(1) {
-        let crate_movement = CrateMovement::from_string(line?)?;
-        crate_stacks.move_crates_sequential(crate_movement)?;
+    while reader.read_line(&mut line)? != 0 {
+        let l = line.trim();
+
+        if !l.is_empty() {
+            let crate_movement = CrateMovement::from_string(l)?;
+            crate_stacks.move_crates_sequential(crate_movement)?;
+            line.clear();
+        }
     }
 
     return Ok(crate_stacks.get_top_crates());
@@ -113,12 +130,18 @@ fn solution_part_1() -> Result<String, Box<dyn std::error::Error>> {
 
 fn solution_part_2() -> Result<String, Box<dyn std::error::Error>> {
     let file = File::open("input.txt").map_err(|e| format!("Error opening input.txt: {e:?}"))?;
-    let mut lines = BufReader::new(file).lines();
-    let mut crate_stacks = CrateStacks::from_file(&mut lines)?;
+    let mut reader = BufReader::new(file);
+    let mut line = String::with_capacity(16);
+    let mut crate_stacks = CrateStacks::from_file(&mut reader)?;
 
-    for line in lines.skip(1) {
-        let crate_movement = CrateMovement::from_string(line?)?;
-        crate_stacks.move_crates_grouped(crate_movement)?;
+    while reader.read_line(&mut line)? != 0 {
+        let l = line.trim();
+
+        if !l.is_empty() {
+            let crate_movement = CrateMovement::from_string(l)?;
+            crate_stacks.move_crates_grouped(crate_movement)?;
+            line.clear();
+        }
     }
 
     return Ok(crate_stacks.get_top_crates());

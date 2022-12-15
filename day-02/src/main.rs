@@ -3,9 +3,9 @@ use std::io::{BufRead, BufReader};
 
 #[derive(Clone, Copy)]
 enum Shape {
-    Rock,
-    Paper,
-    Scissors,
+    Rock = 1,
+    Paper = 2,
+    Scissors = 3,
 }
 
 impl Shape {
@@ -31,21 +31,13 @@ impl Shape {
             _ => Err("Shape character must only be A, B, C, X, Y, or Z"),
         }
     }
-
-    fn to_score(&self) -> usize {
-        match self {
-            Shape::Rock => 1,
-            Shape::Paper => 2,
-            Shape::Scissors => 3,
-        }
-    }
 }
 
 #[derive(Clone, Copy)]
 enum Outcome {
-    Lose,
-    Draw,
-    Win,
+    Lose = 0,
+    Draw = 3,
+    Win = 6,
 }
 
 impl Outcome {
@@ -71,14 +63,6 @@ impl Outcome {
             _ => Err("Outcome character must only by X, Y, or Z"),
         }
     }
-
-    fn to_score(&self) -> usize {
-        match self {
-            Outcome::Lose => 0,
-            Outcome::Draw => 3,
-            Outcome::Win => 6,
-        }
-    }
 }
 
 fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
@@ -93,8 +77,8 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
         let player_shape = Shape::from_char(line_bytes[2] as char)?;
         let round_outcome = Outcome::from_shapes(player_shape, opponent_shape);
 
-        score += player_shape.to_score();
-        score += round_outcome.to_score();
+        score += player_shape as usize;
+        score += round_outcome as usize;
         line.clear();
     }
 
@@ -113,8 +97,8 @@ fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
         let target_outcome = Outcome::from_char(line_bytes[2] as char)?;
         let target_player_shape = Shape::from_shape_and_outcome(opponent_shape, target_outcome);
 
-        score += target_outcome.to_score();
-        score += target_player_shape.to_score();
+        score += target_outcome as usize;
+        score += target_player_shape as usize;
         line.clear();
     }
 

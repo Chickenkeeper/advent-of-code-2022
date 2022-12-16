@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::str::FromStr;
 
 #[derive(Clone, Copy)]
 enum Shape {
@@ -22,13 +23,20 @@ impl Shape {
             (Shape::Scissors, Outcome::Win) => Shape::Rock,
         }
     }
+}
 
-    fn from_char(char: char) -> Result<Self, &'static str> {
-        match char {
-            'A' | 'X' => Ok(Shape::Rock),
-            'B' | 'Y' => Ok(Shape::Paper),
-            'C' | 'Z' => Ok(Shape::Scissors),
-            _ => Err("Shape character must only be A, B, C, X, Y, or Z"),
+impl FromStr for Shape {
+    type Err = std::io::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "A" | "X" => Ok(Shape::Rock),
+            "B" | "Y" => Ok(Shape::Paper),
+            "C" | "Z" => Ok(Shape::Scissors),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Shape character must only be A, B, C, X, Y, or Z",
+            )),
         }
     }
 }
@@ -54,13 +62,20 @@ impl Outcome {
             (Shape::Scissors, Shape::Scissors) => Outcome::Draw,
         }
     }
+}
 
-    fn from_char(char: char) -> Result<Self, &'static str> {
-        match char {
-            'X' => Ok(Outcome::Lose),
-            'Y' => Ok(Outcome::Draw),
-            'Z' => Ok(Outcome::Win),
-            _ => Err("Outcome character must only by X, Y, or Z"),
+impl FromStr for Outcome {
+    type Err = std::io::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "X" => Ok(Outcome::Lose),
+            "Y" => Ok(Outcome::Draw),
+            "Z" => Ok(Outcome::Win),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Outcome character must only by X, Y, or Z",
+            )),
         }
     }
 }
@@ -72,9 +87,9 @@ fn solution_part_1() -> Result<usize, Box<dyn std::error::Error>> {
     let mut score = 0;
 
     while reader.read_line(&mut line)? != 0 {
-        let line_bytes = line.trim().as_bytes();
-        let opponent_shape = Shape::from_char(line_bytes[0] as char)?;
-        let player_shape = Shape::from_char(line_bytes[2] as char)?;
+        let mut shapes = line.split_whitespace();
+        let opponent_shape = Shape::from_str(shapes.next().unwrap_or_default())?;
+        let player_shape = Shape::from_str(shapes.next().unwrap_or_default())?;
         let round_outcome = Outcome::from_shapes(player_shape, opponent_shape);
 
         score += player_shape as usize;
@@ -92,9 +107,9 @@ fn solution_part_2() -> Result<usize, Box<dyn std::error::Error>> {
     let mut score = 0;
 
     while reader.read_line(&mut line)? != 0 {
-        let line_bytes = line.trim().as_bytes();
-        let opponent_shape = Shape::from_char(line_bytes[0] as char)?;
-        let target_outcome = Outcome::from_char(line_bytes[2] as char)?;
+        let mut shapes = line.split_whitespace();
+        let opponent_shape = Shape::from_str(shapes.next().unwrap_or_default())?;
+        let target_outcome = Outcome::from_str(shapes.next().unwrap_or_default())?;
         let target_player_shape = Shape::from_shape_and_outcome(opponent_shape, target_outcome);
 
         score += target_outcome as usize;
